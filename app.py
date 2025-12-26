@@ -23,7 +23,7 @@ if menu == "計時器":
     with col1:
         st.metric("我們已經在一起", f"{days} 天")
     with col2:
-        st.metric("心動指數", "100%")
+        st.metric("心動指數", f"{days}% ")
         
     st.success("每一天都值得紀念！")
     st.write("---") # 分隔線
@@ -60,4 +60,5 @@ elif menu == "悄悄話":
     msg = st.text_area("想說什麼？")
     if st.button("發送"):
         st.snow() # 氣球特效
+
         st.write(f"收到你的訊息了：{msg}")
