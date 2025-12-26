@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 # 1. 設定網頁標題
-st.set_page_config(page_title="shun&hxy", page_icon="❤️")
+st.set_page_config(page_title="shun & hxy", page_icon="❤️")
 st.title("🧑🏻‍❤️‍👩🏻 我們的戀愛日記")
 st.audio("bgm.ogg", format="audio/mp3") 
 # 如果你暫時沒有 mp3 檔，可以用下面這行測試 (Streamlit 範例音樂)：
@@ -65,5 +65,6 @@ elif menu == "悄悄話":
         st.snow() # 氣球特效
 
         st.write(f"收到你的訊息了：{msg}")
+
 
 
