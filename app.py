@@ -9,7 +9,10 @@ st.audio("bgm.ogg", format="audio/mp3")
 # 如果你暫時沒有 mp3 檔，可以用下面這行測試 (Streamlit 範例音樂)：
 #st.audio("https://upload.wikimedia.org/wikipedia/commons/c/c4/Muriel-Nguyen-Xuan-Chopin-valse-opus64-1.ogg")
 # 2. 左側選單
-menu = st.sidebar.radio("瀏覽模式", ["計時器", "愛的照片", "悄悄話"])
+menu = st.sidebar.selectbox(
+    "使用模式", 
+    ["虛擬寵物記帳", "照片牆", "悄悄話", "去哪裡玩","吃什麼東西","共同願望清單","購物清單"]
+)
 
 # 3. 不同的頁面內容
 if menu == "計時器":
@@ -51,7 +54,7 @@ elif menu == "愛的照片":
     # 這裡先用網路圖片代替，確保你能成功執行
     col1, col2 = st.columns(2)
     with col1:
-        st.image("photos/love1.jpg", caption="這是我們第一張合照")
+        st.image("photos/love1.jpg", caption="我們的第一張合照")
     with col2:
         st.image("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba", caption="可愛的貓貓")
 
@@ -62,3 +65,4 @@ elif menu == "悄悄話":
         st.snow() # 氣球特效
 
         st.write(f"收到你的訊息了：{msg}")
+
