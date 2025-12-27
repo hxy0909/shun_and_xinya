@@ -201,8 +201,124 @@ elif menu == "💌 悄悄話":
 
 # === 其他未完成的功能 (先放個佔位符) ===
 elif menu == "💰 記帳":
-    st.subheader("💰 戀愛公基金")
-    st.info("🚧 這個功能正在施工中... 敬請期待！")
+    st.subheader("💰 戀愛公基金 & 分帳計算機")
+
+    # --- 1. 初始化記帳資料 (暫存於記憶體) ---
+    if 'bills' not in st.session_state:
+        # 預設建立一個空的 DataFrame 結構
+        st.session_state['bills'] = pd.DataFrame(columns=["項目", "金額", "誰付的錢", "歸誰的(分帳)"])
+
+    # --- 2. 新增款項區塊 ---
+    with st.expander("➕ 新增一筆消費", expanded=True):
+        # 模擬 OCR 功能 (因為沒有 API Key，我們先用模擬按鈕)
+        if st.button("📸 [模擬] 掃描收據 (測試用)"):
+            # 這裡假裝 AI 讀到了收據內容
+            mock_data = pd.DataFrame([
+                {"項目": "牛肉麵", "金額": 250, "誰付的錢": "Shun", "歸誰的(分帳)": "平分"},
+                {"項目": "珍珠奶茶", "金額": 60, "誰付的錢": "Shun", "歸誰的(分帳)": "Hxy"},
+                {"項目": "電影票", "金額": 600, "誰付的錢": "Hxy", "歸誰的(分帳)": "平分"},
+            ])
+            # 把模擬資料加入目前的帳單
+            st.session_state['bills'] = pd.concat([st.session_state['bills'], mock_data], ignore_index=True)
+            st.success("AI 成功辨識收據內容！(模擬)")
+            st.rerun()
+
+        st.write("--- 或手動輸入 ---")
+        c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
+        with c1:
+            item_name = st.text_input("項目", placeholder="例如：晚餐")
+        with c2:
+            price = st.number_input("金額", min_value=0, step=10)
+        with c3:
+            payer = st.selectbox("誰先付的？", ["Shun", "Hxy"])
+        with c4:
+            # 這裡設定三種邏輯：平分 / 算 Shun 的 / 算 Hxy 的
+            split_method = st.selectbox("算是誰的？", ["平分", "Shun", "Hxy"])
+
+        if st.button("加入清單"):
+            new_row = {"項目": item_name, "金額": price, "誰付的錢": payer, "歸誰的(分帳)": split_method}
+            # 將新資料加入 DataFrame
+            st.session_state['bills'] = pd.concat([st.session_state['bills'], pd.DataFrame([new_row])], ignore_index=True)
+            st.success(f"已加入：{item_name}")
+            st.rerun()
+
+    # --- 3. 互動式表格 (最精華的部分) ---
+    if not st.session_state['bills'].empty:
+        st.write("### 📝 目前的帳單明細")
+        st.info("💡 你可以直接在下方表格修改內容，改完按 Enter 自動更新！")
+
+        # 使用 data_editor 讓表格可以直接編輯！
+        edited_df = st.data_editor(
+            st.session_state['bills'], 
+            num_rows="dynamic", # 允許使用者在表格直接刪除/新增列
+            use_container_width=True
+        )
+        
+        # 更新 session_state，確保修改被記住
+        st.session_state['bills'] = edited_df
+
+        st.write("---")
+        
+        # --- 4. 自動結算邏輯 (數學核心) ---
+        st.subheader("📊 結算結果")
+        
+        # 初始化變數
+        total_expense = 0
+        shun_paid = 0 # Shun 掏出的錢
+        hxy_paid = 0  # Hxy 掏出的錢
+        shun_should_pay = 0 # Shun 應該負擔的錢
+        hxy_should_pay = 0  # Hxy 應該負擔的錢
+
+        # 跑迴圈計算每一筆
+        for index, row in edited_df.iterrows():
+            cost = row["金額"]
+            who_paid = row["誰付的錢"]
+            split = row["歸誰的(分帳)"]
+            
+            total_expense += cost
+
+            # 1. 紀錄誰先墊錢
+            if who_paid == "Shun":
+                shun_paid += cost
+            else:
+                hxy_paid += cost
+            
+            # 2. 計算誰該負責這筆錢
+            if split == "平分":
+                shun_should_pay += cost / 2
+                hxy_should_pay += cost / 2
+            elif split == "Shun":
+                shun_should_pay += cost
+            elif split == "Hxy":
+                hxy_should_pay += cost
+        
+        # 顯示大字報
+        c1, c2, c3 = st.columns(3)
+        c1.metric("總花費", f"${total_expense}")
+        c2.metric("Shun 先墊了", f"${shun_paid}")
+        c3.metric("Hxy 先墊了", f"${hxy_paid}")
+
+        st.write("#### 💸 最終結論：")
+        
+        # 計算差額 (Shun 墊的錢 - Shun 該付的錢)
+        # 如果是正的，代表多付了(要收錢)；負的代表少付了(要給錢)
+        final_balance = shun_paid - shun_should_pay
+        
+        if final_balance > 0:
+            st.success(f"👉 **Hxy 要給 Shun**： ${abs(final_balance):.0f} 元")
+        elif final_balance < 0:
+            st.error(f"👉 **Shun 要給 Hxy**： ${abs(final_balance):.0f} 元")
+        else:
+            st.balloons()
+            st.success("🎉 太完美了！兩不相欠！")
+            
+        # 清除按鈕
+        if st.button("🗑️ 全部結清 (清除資料)"):
+            st.session_state['bills'] = pd.DataFrame(columns=["項目", "金額", "誰付的錢", "歸誰的(分帳)"])
+            st.rerun()
+
+    else:
+        st.info("目前還沒有記帳資料，趕快去消費吧！")
 
 elif menu == "✈️ 去哪裡玩":
     st.subheader("✈️ 旅行計畫")
