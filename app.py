@@ -345,4 +345,4 @@ elif menu == "🛒 購物清單":
         with c2:
             if st.button("🗑️", key=f"del_{i}"):
                 st.session_state['shopping_list'].pop(i)
-                st.rerun()import streamlit as st
+                st.rerun()
